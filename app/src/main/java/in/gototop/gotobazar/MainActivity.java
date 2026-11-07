@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.SslErrorHandler;
@@ -16,25 +17,33 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
 public class MainActivity extends Activity {
 
-    private static final String HOME =
-            "https://www.google.com/";
+    private static final String HOME = "https://gototop.in/";
 
     private WebView webView;
     private ProgressBar progress;
+
+    private final int TEAL = Color.rgb(10, 68, 89);
+    private final int YELLOW = Color.rgb(244, 163, 0);
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        getWindow().setStatusBarColor(Color.rgb(10, 68, 89));
-        getWindow().setNavigationBarColor(Color.rgb(10, 68, 89));
+        getWindow().setStatusBarColor(TEAL);
+        getWindow().setNavigationBarColor(TEAL);
 
-        FrameLayout root = new FrameLayout(this);
+        LinearLayout mainLayout = new LinearLayout(this);
+        mainLayout.setOrientation(LinearLayout.VERTICAL);
+
+        // Website area
+        FrameLayout webContainer = new FrameLayout(this);
 
         webView = new WebView(this);
 
@@ -45,31 +54,67 @@ public class MainActivity extends Activity {
 
         progress.setMax(100);
         progress.setProgressTintList(
-                android.content.res.ColorStateList.valueOf(
-                        Color.rgb(244, 163, 0)
+                android.content.res.ColorStateList.valueOf(YELLOW)
+        );
+
+        webContainer.addView(
+                webView,
+                new FrameLayout.LayoutParams(-1, -1)
+        );
+
+        FrameLayout.LayoutParams progressParams =
+                new FrameLayout.LayoutParams(-1, dp(3), Gravity.TOP);
+
+        webContainer.addView(progress, progressParams);
+
+        mainLayout.addView(
+                webContainer,
+                new LinearLayout.LayoutParams(
+                        -1, 0, 1
                 )
         );
 
-        root.addView(webView,
-                new FrameLayout.LayoutParams(-1, -1));
+        // Bottom navigation
+        LinearLayout bottomBar = new LinearLayout(this);
+        bottomBar.setOrientation(LinearLayout.HORIZONTAL);
+        bottomBar.setGravity(Gravity.CENTER);
+        bottomBar.setBackgroundColor(TEAL);
+        bottomBar.setPadding(dp(12), dp(7), dp(12), dp(7));
 
-        root.addView(progress,
-                new FrameLayout.LayoutParams(-1, dp(3)));
+        Button homeButton = new Button(this);
+        homeButton.setText("⌂  HOME");
+        homeButton.setTextColor(Color.WHITE);
+        homeButton.setTextSize(15);
+        homeButton.setAllCaps(false);
+        homeButton.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(YELLOW)
+        );
 
-        setContentView(root);
+        bottomBar.addView(
+                homeButton,
+                new LinearLayout.LayoutParams(-1, dp(48))
+        );
 
-        WebSettings s = webView.getSettings();
+        mainLayout.addView(
+                bottomBar,
+                new LinearLayout.LayoutParams(-1, dp(62))
+        );
 
-        s.setJavaScriptEnabled(true);
-        s.setDomStorageEnabled(true);
-        s.setDatabaseEnabled(true);
-        s.setLoadWithOverviewMode(true);
-        s.setUseWideViewPort(true);
-        s.setJavaScriptCanOpenWindowsAutomatically(false);
-        s.setSupportMultipleWindows(false);
-        s.setAllowFileAccess(false);
-        s.setAllowContentAccess(true);
-        s.setMixedContentMode(
+        setContentView(mainLayout);
+
+        // WebView settings
+        WebSettings settings = webView.getSettings();
+
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
+        settings.setJavaScriptCanOpenWindowsAutomatically(false);
+        settings.setSupportMultipleWindows(false);
+        settings.setAllowFileAccess(false);
+        settings.setAllowContentAccess(true);
+        settings.setMixedContentMode(
                 WebSettings.MIXED_CONTENT_NEVER_ALLOW
         );
 
@@ -79,7 +124,9 @@ public class MainActivity extends Activity {
 
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
 
+        // Loading progress
         webView.setWebChromeClient(new WebChromeClient() {
+
             @Override
             public void onProgressChanged(
                     WebView view, int newProgress) {
@@ -93,6 +140,7 @@ public class MainActivity extends Activity {
             }
         });
 
+        // Website navigation
         webView.setWebViewClient(new WebViewClient() {
 
             @Override
@@ -129,10 +177,17 @@ public class MainActivity extends Activity {
                     SslErrorHandler handler,
                     SslError error) {
 
+                // Keep SSL security enabled.
                 handler.cancel();
             }
         });
 
+        // Home button
+        homeButton.setOnClickListener(v -> {
+            webView.loadUrl(HOME);
+        });
+
+        // Load website
         if (savedInstanceState == null) {
             webView.loadUrl(HOME);
         } else {
@@ -140,35 +195,26 @@ public class MainActivity extends Activity {
         }
     }
 
+    // Keep normal websites inside the app
     private boolean routeUrl(String value) {
 
         Uri uri = Uri.parse(value);
 
         String scheme = uri.getScheme() == null
-                ? "" : uri.getScheme();
+                ? "" : uri.getScheme().toLowerCase();
 
-        String host = uri.getHost() == null
-                ? "" : uri.getHost().toLowerCase();
-
-        if ((scheme.equals("https") || scheme.equals("http")) &&
-                (host.equals("google.com") ||
-                 host.equals("www.google.com") ||
-                 host.equals("share.google") ||
-                 host.equals("gototop.in") ||
-                 host.equals("www.gototop.in"))) {
-
+        if (scheme.equals("https") || scheme.equals("http")) {
             return false;
         }
 
-        if (scheme.equals("http") || scheme.equals("https") ||
+        // External phone, email and payment actions
+        if (scheme.equals("tel") ||
                 scheme.equals("mailto") ||
-                scheme.equals("tel") ||
+                scheme.equals("sms") ||
                 scheme.equals("upi")) {
 
             try {
-                startActivity(
-                        new Intent(Intent.ACTION_VIEW, uri)
-                );
+                startActivity(new Intent(Intent.ACTION_VIEW, uri));
             } catch (Exception ignored) {
             }
 
@@ -206,6 +252,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+
         if (webView != null) {
             webView.destroy();
             webView = null;
