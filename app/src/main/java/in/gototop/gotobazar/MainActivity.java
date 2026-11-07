@@ -19,7 +19,7 @@ import android.widget.FrameLayout;
 import android.graphics.Color;
 
 public class MainActivity extends Activity {
-    private static final String HOME = "https://gototop.in/";
+    private static final String HOME = "https://share.google/N3yjpQQFLPC6yHxif";
     private WebView webView;
     private ProgressBar progress;
 
