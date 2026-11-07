@@ -79,28 +79,33 @@ public class MainActivity extends Activity {
         else webView.restoreState(savedInstanceState);
     }
 
-    private boolean routeUrl(String value) {
-        Uri uri = Uri.parse(value);
-        String scheme = uri.getScheme() == null ? "" : uri.getScheme();
-        String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
-        if ((scheme.equals("https") || scheme.equals("http")) &&
-           (host.equals("gototop.in") ||
- host.equals("www.gototop.in") ||
- host.equals("share.google") ||
- host.equals("google.com") ||
- host.equals("www.google.com")))) return false;
-        if (scheme.equals("http") || scheme.equals("https") || scheme.equals("mailto") ||
-            scheme.equals("tel") || scheme.equals("upi") || scheme.equals("intent")) {
-            try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); } catch (Exception ignored) { }
-            return true;
+    
+private boolean routeUrl(String value) {
+    Uri uri = Uri.parse(value);
+
+    String scheme = uri.getScheme() == null
+            ? "" : uri.getScheme();
+
+    String host = uri.getHost() == null
+            ? "" : uri.getHost().toLowerCase();
+
+    if ((scheme.equals("https") || scheme.equals("http")) &&
+        (host.equals("gototop.in") ||
+         host.equals("www.gototop.in") ||
+         host.equals("google.com") ||
+         host.equals("www.google.com"))) {
+        return false;
+    }
+
+    if (scheme.equals("http") || scheme.equals("https") ||
+        scheme.equals("mailto") || scheme.equals("tel") ||
+        scheme.equals("upi")) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, uri));
+        } catch (Exception ignored) {
         }
         return true;
     }
 
-    private int dp(int value) { return (int)(value * getResources().getDisplayMetrics().density + 0.5f); }
-    @Override protected void onSaveInstanceState(Bundle out) { super.onSaveInstanceState(out); webView.saveState(out); }
-    @Override public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) webView.goBack(); else super.onBackPressed();
-    }
-    @Override protected void onDestroy() { if (webView != null) webView.destroy(); super.onDestroy(); }
+    return true;
 }
