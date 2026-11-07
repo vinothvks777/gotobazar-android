@@ -106,6 +106,7 @@ private boolean routeUrl(String value) {
         }
         return true;
     }
+    }
 
     return true;
 }
